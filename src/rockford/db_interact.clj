@@ -41,3 +41,17 @@
       ["SELECT dataset_id, quantitative_value, qualitative_value, ct_value FROM result_molecular_standard WHERE challenge_sample_id = ?" sample-id] 
       :as-arrays? true))))
 
+(defn get-chall-one
+  []
+  (reduce 
+    #(m/join-along 1 %1 %2) 
+    (res-query 1) 
+    (map dat-query [1 2 3 4])))
+
+(defn get-sample-ids
+  []
+  (map dat-query 
+       (j/query 
+         (db-connection-items) 
+         ["SELECT id FROM challenge_sample LIMIT 5"] :result-set-fn #(flatten (doall %)) :row-fn vals)))
+
