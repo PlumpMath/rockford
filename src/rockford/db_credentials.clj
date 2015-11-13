@@ -4,3 +4,5 @@
                :subname "//127.0.0.1:3306/items"
                :user "root"
                :password "xpass"})
+
+(def random "to test gitignore")
