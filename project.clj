@@ -4,9 +4,11 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [compojure "1.4.0"]
-                 [http-kit "2.1.18"]
+                 [http-kit "2.1.19"]
                  [enlive "1.1.6"]
                  [ring/ring-defaults "0.1.5"]
+                 [ring/ring-core "1.4.0"]
+                 [ring/ring-devel "1.4.0"]
                  [org.clojure/data.csv "0.1.3"]
                  [org.clojure/java.jdbc "0.4.2"]
                  [mysql/mysql-connector-java "5.1.37"]
@@ -17,4 +19,5 @@
   :ring {:handler rockford.handler/app}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
-                        [ring/ring-mock "0.3.0"]]}})
+                        [ring/ring-mock "0.3.0"]]}}
+  :main rockford.core)

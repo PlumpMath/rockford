@@ -3,6 +3,7 @@
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [rockford.page :as page]
+            [ring.middleware.reload :as reload]
             [org.httpkit.server :refer [run-server]]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]])
   (:gen-class))
@@ -13,8 +14,12 @@
   (route/resources "/")
   (route/not-found "Not Found"))
 
+(def in-dev true)
+
 (def app
-  (wrap-defaults app-routes site-defaults))
+  (if in-dev
+    (reload/wrap-reload (wrap-defaults app-routes site-defaults))
+    (wrap-defaults app-routes site-defaults)))
 
 (defn -main []
   (let [port (Integer/parseInt (get (System/getenv) "PORT" "5000"))]

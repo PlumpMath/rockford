@@ -25,7 +25,7 @@
 		</div>
 		<input class=\"btn btn-primary\" type=\"submit\" name=\"submit\" value=\"Submit\">
 		</form>")
-   :page-content ""})
+   :page-content "Let's see what happens."})
 
 (defn upload-stuff
   [request]
