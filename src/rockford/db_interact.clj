@@ -1,12 +1,8 @@
 (ns rockford.db-interact
   (:import com.mchange.v2.c3p0.ComboPooledDataSource)
   (:require [clojure.java.jdbc :as j]
-            [clojure.core.matrix :as m]))
-
-(def items-spec {:subprotocol "mysql"
-               :subname "//127.0.0.1:3306/items"
-               :user "root"
-               :password "xpass"})
+            [clojure.core.matrix :as m]
+            [rockford.db-credentials :refer [*items-spec*]]))
 
 (defn pool
   [spec]
@@ -21,7 +17,7 @@
                (.setMaxIdleTime (* 3 60 60)))] 
     {:datasource cpds}))
 
-(def pooled-db-items (delay (pool items-spec)))
+(def pooled-db-items (delay (pool *items-spec*)))
 
 (defn db-connection-items [] @pooled-db-items)
 
