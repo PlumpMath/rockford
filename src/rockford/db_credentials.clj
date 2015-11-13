@@ -5,4 +5,4 @@
                :user "root"
                :password "xpass"})
 
-(def random "to test gitignore")
+(def whatever "will git work this time")
