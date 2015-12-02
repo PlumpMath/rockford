@@ -16,8 +16,20 @@
    \W [\A \T],
    \Y [\C \T]})
 
-(defn get-nucs [x]
+(defn get-nucs 
+  "Returns a set of the base or mixture you give it
+   plus any bases or mixtures below it in the hierarchy."
+  [x]
   (let [nuc-value (get nuc-map x)]
     (if (= x nuc-value)
       #{x}
       (set (conj (mapcat get-nucs nuc-value) x)))))
+
+(defn nuc-drilldown
+  "Returns a set of either the nucleotide you give it
+   or the nucleotides contained in the mixture you give it."
+  [x]
+  (let [nuc-value (get nuc-map x)]
+    (if (= x nuc-value)
+      #{x}
+      (set (mapcat nuc-drilldown nuc-value)))))
