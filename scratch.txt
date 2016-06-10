@@ -1,0 +1,37 @@
+index.html
+
+{% for item in me %}
+<div class="col-sm-4">
+                        <div class="list-group">
+                            <a href="{{item.id}}" class="list-group-item active">{{item.ref_code|de-keyword}}</a>
+				{% for sample in item.samples %}
+                            <a href="{{sample.id}}" class="list-group-item">{{sample.sample_name}}</a>
+				   {% endfor %}
+                        </div>
+                    </div>
+{% endfor %}
+
+; What I discovered tonight is that the top level passed to a Selmer for loop has to be a keyword
+; You can't just start with a vector and do a "for map in 0" sort of thing
+; Also, that you never have to refer to the vector using an 0 in the for loop
+; The fact that it's a collection is apparently implicit
+
+(ns rockford.handler
+  (:require [compojure.core :refer :all]
+            [compojure.route :as route]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [selmer.parser :as selmer]
+            [selmer.filters :as f]))
+
+(f/add-filter! :de-keyword name)
+
+(def spresso [{:id 20 :ref_code :HBVDNA} {:id 30 :ref_code :HIVRNA}])
+
+(def lookup {:HBVDNA [{:id 20 :sample_name "HBVDNA15-01"} {:id 21 :sample_name "HBVDNA15-02"}] 
+                :HIVRNA [{:id 22 :sample_name "HIVRNA15-01"} {:id 23 :sample_name "HIVRNA15-02"}]})
+
+(def sample-map (map #(assoc % :samples (get lookup (get % :ref_code))) spresso))
+
+(defn selmer-page
+  [request]
+  (selmer/render-file "index.html" {:me sample-map}))
