@@ -73,3 +73,18 @@ index.html
                                 :end-codon (bji/parse-int (:end-codon params))}))]
                                 
  :codons (partition-all 10 (range 1 200))
+ 
+ (defn validate-reference-for-form-old
+  [{:keys [params]}]
+  (let [int-params (merge params
+                     (reduce-kv #(assoc %1 %2 (bji/parse-int %3)) {} 
+                                (select-keys params [:start-codon :end-codon])))
+        errs-then-fasta (-> params file-to-fasta (check-max-fastas 1))
+        errs-only (if (empty? (first errs-then-fasta)) nil (first errs-then-fasta))
+        int-codons (select-keys int-params [:start-codon :end-codon])
+        codon-counter (count-reference-codons (merge int-codons (second errs-then-fasta)))]
+    (if-let [errors (merge-with #(reduce conj %1 %2) (validate-reference-form int-params) (codon-ordering-validation int-params) errs-only codon-counter)]
+      (-> (response/found "/")
+      (assoc :flash (assoc int-params :errors errors)))
+     (save-reference! int-params 
+                     (db/insert-reference! (merge (second errs-then-fasta) int-codons))))))

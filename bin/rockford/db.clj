@@ -37,9 +37,14 @@
 ;; Functions to pass queries to
 
 (defn do-local-insert!
-  [table map]
+  [table xs]
   (j/with-db-connection [conn {:datasource local-datasource}]
-    (j/insert! conn table map)))
+    (j/insert! conn table xs)))
+
+(defn do-local-insert-multi!
+  [table maps]
+  (j/with-db-connection [conn {:datasource local-datasource}]
+    (j/insert-multi! conn table maps)))
 
 (defn do-local-query [query]
   (j/with-db-connection [conn {:datasource local-datasource}]
@@ -51,7 +56,28 @@
 
 ;; Queries
 
+(defn get-reference-sequence
+  [sequence-id]
+  (do-local-query ["SELECT * FROM reference_sequence where id = ?" sequence-id]))
 
+(defn insert-reference-drms!
+  [sequence-id sequence start-codon end-codon]
+  (let [drm-maps (map #(hash-map :reference_id % :codon_id %2 :sequence %3 :is_drm %4)
+                      (repeat (- (inc end-codon) start-codon) sequence-id)
+                      (range start-codon (inc end-codon))
+                      (map #(apply str %) (partition 3 sequence))
+                      (repeat 0))]
+    (do-local-insert-multi! :reference_drms drm-maps)))
+  
+(defn do-reference-inserts!
+  [{:keys [header sequence start-codon end-codon]}]
+  (try
+    (let [key (-> (do-local-insert! :reference_sequence {:name header :sequence sequence :start_codon start-codon :end_codon end-codon :complete 0})
+                first :generated_key)]
+      (do
+        (insert-reference-drms! key sequence start-codon end-codon)
+        {:reference_key key}))
+    (catch Exception e {:error (str (.getMessage e))})))
 
 ;; Query combiners
 

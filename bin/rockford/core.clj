@@ -64,22 +64,22 @@
     (map fasta-to-clj)))
 
 (defn old-parse-fasta-collect-errors
-     [file-loc]
-     (let [s (new java.io.StringWriter)]
-       (binding [*out* s]
-         (let [done-fasta (->> file-loc (file->parsed-fasta)
-                            (map fasta-to-clj))]
-           (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)))))
+  [file-loc]
+  (let [s (new java.io.StringWriter)]
+    (binding [*out* s]
+      (let [done-fasta (->> file-loc (file->parsed-fasta)
+                         (map fasta-to-clj))]
+        (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)))))
 
 (defn parse-fasta-collect-errors
-        [file-loc]
-        (let [s (new java.io.StringWriter)]
-          (binding [*out* s]
-            (let [done-fasta (->> file-loc (file->parsed-fasta)
-                               (map fasta-to-clj))]
-              (if (not= "" (str s))
-                (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)
-                (cons {} done-fasta))))))
+  [file-loc]
+  (let [s (new java.io.StringWriter)]
+    (binding [*out* s]
+      (let [done-fasta (->> file-loc (file->parsed-fasta)
+                         (map fasta-to-clj))]
+        (if (not= "" (str s))
+          (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)
+          (cons {} done-fasta))))))
 
 (defn parse-results-fasta-from-upload
   [file-loc]
