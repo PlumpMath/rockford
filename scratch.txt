@@ -35,3 +35,41 @@ index.html
 (defn selmer-page
   [request]
   (selmer/render-file "index.html" {:me sample-map}))
+  
+                 <!-- Toggle buttons to appear post-submit -->
+               
+                <div class="row">
+                	<div class="col-lg-12">
+                	<h2>Select drug resistance sites</h2>
+                	
+                	<div class="row">
+                    <div class="col-lg-12">
+                        <ul class="list-group">
+                            
+                	{% for c in codons %}
+                			<li class="list-group-item">
+                			
+                			{% for i in c %}
+                			
+                			<button type="button" class="btn btn-primary">
+                			<input type="checkbox" name="codon" id="codon_{{i}}" value="codon_{{i}}"> Codon {{i}}
+                			</button>
+					
+							{% endfor %}
+							
+							</li>
+					
+					{% endfor %}
+					</ul>
+					</div>
+                	</div>
+                </div>
+                </div>
+                
+                <!-- Toggle -->
+                
+  (let [parsed-params (-> params 
+                        (merge {:start-codon (bji/parse-int (:start-codon params))
+                                :end-codon (bji/parse-int (:end-codon params))}))]
+                                
+ :codons (partition-all 10 (range 1 200))

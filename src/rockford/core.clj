@@ -1,17 +1,24 @@
 (ns rockford.core
   (:require [clojure.java.io :as io]
             [rockford.db :as db]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [clojure.tools.logging :refer :all]
+            [clj-logging-config.log4j :refer :all])
   (:import [org.biojava.nbio.core.sequence.io FastaReader FastaReaderHelper GenericFastaHeaderParser DNASequenceCreator]
            [org.biojava.nbio.core.util ConcurrencyTools]
            [org.biojava.nbio.core.sequence.compound AmbiguityDNACompoundSet]
            [org.biojava.nbio.alignment Alignments Alignments$PairwiseSequenceScorerType]
            [org.biojava.nbio.alignment SimpleGapPenalty]
            [org.biojava.nbio.core.alignment.matrices SubstitutionMatrixHelper]
-           [org.biojava.nbio.core.alignment.template Profile Profile$StringFormat]))
+           [org.biojava.nbio.core.alignment.template Profile Profile$StringFormat]
+           [java.io StringWriter]))
+
+(set-loggers! "org.biojava.nbio.core.sequence.io.FastaReader" {:out (fn [ev] (println (:message ev)))})
 
 (defn parse-int [s]
-  (Integer/parseInt (re-find #"\A-?\d+" s)))
+  (if (re-matches #"^\d+$" s)
+    (Integer/parseInt s)
+    s))
 
 (defn dr-map->input-stream
   [xs]
@@ -20,11 +27,6 @@
         (reduce #(str % "\r\n" %2)))
     (.getBytes)
     (io/input-stream)))
-
-(defn location->file
-  "To read a physical fasta file."
-  [in-file-loc]
-  (io/file in-file-loc))
 
 (defn read-fasta
   "Will accept fasta data in either input-stream or File format."
@@ -35,15 +37,55 @@
      (FastaReader. fasta-header-parser ambiguity-set)
      (.process))))
 
+(defn file->parsed-fasta
+  "To read a physical fasta file."
+  [file-loc]
+  (-> file-loc io/input-stream read-fasta))
+
+;(defn fasta-to-clj
+;  [[k v]] 
+;  (let [part-dataset (->> (str/split k #"\.") (map parse-int))]
+;  {:participant_id (first part-dataset) :dataset_id (second part-dataset) :sequence (.getSequenceAsString v)}))
+
 (defn fasta-to-clj
-  [[k v]] 
-  (let [part-dataset (->> (str/split k #"\.") (map parse-int))]
-  {:participant_id (first part-dataset) :dataset_id (second part-dataset) :sequence (.getSequenceAsString v)}))
+  [[k v]]
+  {:header k :sequence (.getSequenceAsString v)})
+
+(defn parse-result-header
+  [{:keys [header sequence]}]
+  (let [part-dataset (->> (str/split header #"\.") (map parse-int))]
+    (if (not= 2 (count part-dataset)) (println (str "Header " header " is in the wrong format.\n"))
+    {:participant_id (first part-dataset) :dataset_id (second part-dataset) :sequence sequence})))
 
 (defn parse-fasta-from-upload
   [file-loc]
-  (let [parsed-fs (-> file-loc io/input-stream read-fasta)]
-    (map fasta-to-clj parsed-fs)))
+  (->> file-loc
+    file->parsed-fasta
+    (map fasta-to-clj)))
+
+(defn old-parse-fasta-collect-errors
+     [file-loc]
+     (let [s (new java.io.StringWriter)]
+       (binding [*out* s]
+         (let [done-fasta (->> file-loc (file->parsed-fasta)
+                            (map fasta-to-clj))]
+           (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)))))
+
+(defn parse-fasta-collect-errors
+        [file-loc]
+        (let [s (new java.io.StringWriter)]
+          (binding [*out* s]
+            (let [done-fasta (->> file-loc (file->parsed-fasta)
+                               (map fasta-to-clj))]
+              (if (not= "" (str s))
+                (cons {:fasta-errors (clojure.string/split (str s) #"\n")} done-fasta)
+                (cons {} done-fasta))))))
+
+(defn parse-results-fasta-from-upload
+  [file-loc]
+  (->> file-loc
+    file->parsed-fasta
+    (map (comp parse-result-header fasta-to-clj))))
 
 (defn parse-fasta-in-dataset
   [dataset-map]
