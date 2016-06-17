@@ -8,13 +8,13 @@
                 <div class="row">
                 	<div class="col-lg-12">
            
-                <form role="form" action="/reference_upload_trial" enctype="multipart/form-data" method="post">
+                <form role="form" action="/reference/input/" enctype="multipart/form-data" method="post">
                 
                 {{anti-forgery|safe}}
            
                 <div class="form-group {% if errors.results-upload %}has-error{% endif %}{% if errors.fasta-errors %}has-error{% endif %}">
                 	<label class="control-label">Upload aligned sequences</label>
-                	<input type="file" name="results-upload" accept=".fasta*">
+                	<input type="file" name="reference-upload" accept=".fasta*">
                 	{% if errors.results-upload %}
                 	<label class="control-label">A fasta file must be selected.</label>
                 	{% endif %}

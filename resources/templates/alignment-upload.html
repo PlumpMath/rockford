@@ -1,0 +1,64 @@
+{% extends "templates/index.html" %}
+{% block content %}
+
+				<div class="row">
+                    <div class="col-lg-12">
+						<div class="page-header">
+                    		<h1>Upload Fasta alignment files</h1>
+                		</div>
+               			<ol class="breadcrumb">
+                            <li>
+                                <i class="fa fa-dashboard"></i>  <a href="/">Dashboard</a>
+                            </li>                         
+                            <li class="active">
+                                <i class="fa fa-wrench"></i> Alignment upload
+                            </li>
+                        </ol>
+                     </div>
+                 </div>
+           
+                <form role="form" action="/alignment/input/" enctype="multipart/form-data" method="post">
+                
+                {{anti-forgery|safe}}
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                    	<div class="form-group">
+                            <label>Select reference sequence</label>
+                            {% if errors.no-ref %}
+                            <div class="alert alert-danger">
+                    		<strong>ERROR: </strong>You need to select at least one drug resistance site.
+                			</div>
+                			{% endif %}
+                            <select class="form-control" name="reference-id">
+                            <option>Choose a reference sequence from the list</option>
+                            {% for ref in refs %}
+                                <option value="{{ref.reference_id}}" {% if reference-id %}{% ifequal reference-id|int ref.reference_id %}selected{% endifequal %}{% endif %}>{{ref.name}}</option>
+                            {% endfor %}
+                            </select>
+                         </div>
+                            
+                        <div class="form-group">
+                                <label>Enter alignment name</label>
+                                <input maxlength="50" class="form-control" name="alignment-name" 
+                                {% if alignment-name %}value={{alignment-name}}{% endif %} placeholder="Enter an identifying name, e.g. 'CMVDR16-01'">
+                            </div>
+                        
+                		<div class="form-group">
+                			<label>Upload aligned sequences</label>
+                			<input type="file" name="results-upload" accept=".fasta*">
+               			</div>
+               		
+                		<div class="form-group">
+                			<label>Upload consensus sequence</label>
+                			<input type="file" name="consensus-upload" accept=".fasta*">
+               			</div>
+               		
+               		
+                
+                <button type="submit" class="btn btn-default">Upload</button>
+                </div>
+               	</div>
+                </form>   
+				
+{% endblock %}
