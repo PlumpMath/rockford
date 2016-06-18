@@ -1,7 +1,8 @@
 (ns rockford.routes.validators
   (:require [bouncer.core :as b]
             [bouncer.validators :as v]
-            [rockford.core-interop.fasta-parsing :as bji]))
+            [rockford.core-interop.fasta-parsing :as bji]
+            [clojure.string :as s]))
 
 ;; General helper functions
 
@@ -14,6 +15,14 @@
   [m keyvec]
   (->> (select-keys m keyvec)
     (reduce-kv #(assoc %1 %2 (parse-int %3)) {})))
+
+(defn parse-header
+  [fastamap]
+  (let [part-dataset (->> (clojure.string/split (:header fastamap) #"\.") (map parse-int))]
+    (if (= (count part-dataset) 2)
+      (merge fastamap
+             {:participant_id (first part-dataset) :dataset_id (second part-dataset)})
+      fastamap)))
 
 ;; Predicates for bouncer validators
 
@@ -88,6 +97,10 @@
     nil
     (bji/fasta-upload-parser (:tempfile (fieldname params)) errorname)))
 
+(defn fasta-to-res
+  [errmap]
+    (cons (first errmap) (map parse-header (rest errmap))))
+    
 (defn check-max-fastas
  [params fieldname errorname]
  (let [fasta-err-map (file-to-fasta params fieldname errorname)]
@@ -96,3 +109,33 @@
        (merge-with #(reduce conj %1 %2) (first fasta-err-map))
        (conj (rest fasta-err-map)))
      fasta-err-map)))
+
+(defn check-length
+  [errmap len]
+  (reduce #(if (not= (count (:sequence %2)) (* 3 len))
+             (str % "Sequence with header " (:header %2) " is the wrong length (" (count (:sequence %2)) " bases, should be " (* 3 len) ").\n")
+              %1) 
+          "" (rest errmap)))
+
+(defn check-headers
+  [errmap]
+  (reduce #(if (and (integer? (:participant_id %2)) (integer? (:dataset_id %2)))
+             ""
+             (str % "Sequence header " (:header %2) " is in the wrong format.\n")) "" (rest errmap)))
+
+(defn get-errs-consensus
+  [params fieldname errorname len]
+  (let [errmap (check-max-fastas params fieldname errorname)
+        lenerrs (check-length errmap len)]
+    (if (empty? lenerrs)
+      errmap
+      (update-in errmap [1 errorname] into (s/split-lines lenerrs)))))
+
+(defn get-errs-results
+  [params fieldname errorname len]
+  (let [errmap ((comp vec fasta-to-res file-to-fasta) params fieldname errorname)
+        lenerrs (check-length errmap len)
+        headerrs (check-headers errmap)]
+    (if (empty? (str lenerrs headerrs))
+      errmap
+        (update-in errmap [0 errorname] concat (s/split-lines (str lenerrs headerrs))))))

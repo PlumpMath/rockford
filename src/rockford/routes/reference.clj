@@ -36,10 +36,10 @@
 
 (defn choose-drms
   [{:keys [flash]} rid]
-  (let [ref-name (-> (local/id-gets-reference {:reference-id rid}) first)
+  (let [ref-name (-> (local/id-gets-reference {:reference-id rid}) :reference_name)
        drms (->> {:reference-id rid} local/reference-gets-codons (partition-all 10))]
    (selmer/render-file "templates/drms-select.html" (assoc 
-                                                           {:drms drms :reference-id rid :anti-forgery (anti-forgery-field) :name (:name ref-name)}
+                                                           {:drms drms :reference-id rid :anti-forgery (anti-forgery-field) :name ref-name}
                                                            :errors (:errors flash)))))
 
 (defn submit-reference
@@ -70,9 +70,9 @@
 (defn all-references-page
   []
   (let [references (local/get-all-references)]
-    (selmer/render-file "templates/view-all-references.html" {:refs references :name (-> references first :name)})))
+    (selmer/render-file "templates/view-all-references.html" {:refs references})))
 
 (defn view-reference
   [reference-id]
-  (selmer/render-file "templates/view-reference.html" (merge (-> {:reference-id reference-id} local/id-gets-reference first)
+  (selmer/render-file "templates/view-reference.html" (merge (-> {:reference-id reference-id} local/id-gets-reference)
                                                              {:drms (local/drms-to-text {:reference-id reference-id})})))

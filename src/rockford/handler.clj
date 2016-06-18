@@ -26,9 +26,12 @@
   (POST "/submit/" [] ref/submit-reference)))
 
 (defroutes alignment-routes
-  (context "/alignment" []
-           (GET "/input/" [] align-up/upload-page)
-           (POST "/input/" [] align-up/alignment-receiver)))
+  (context "/alignment/input" []
+           (GET "/" [] align-up/upload-page)
+           (POST "/" [] align-up/alignment-receiver))
+  (context "/alignment/view" []
+           (GET "/all/" [] (align-up/view-all))
+           (GET "/:aid{[0-9]+}/" [aid :<< as-int] (align-up/view-alignment aid))))
            
 (defroutes last-routes
   (route/not-found "Borfl"))

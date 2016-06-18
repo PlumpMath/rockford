@@ -52,7 +52,8 @@
 (defn id-gets-reference
   [{:keys [reference-id]}]
   (-> (do-local-query ["SELECT * FROM reference where id = ? AND complete = 1" reference-id])
-    (utils/rename-ids :reference_id)))
+    (utils/rename-ids :reference_id)
+    first))
 
 (defn insert-reference-drms!
   [sequence-id sequence start-codon end-codon]
@@ -90,7 +91,7 @@
 
 (defn get-all-references
   []
-  (let [results (do-local-query (str "SELECT d.reference_id, r.name, r.start_codon, r.end_codon, COUNT(*) 'number_of_drms' FROM reference r INNER JOIN reference_drms "
+  (let [results (do-local-query (str "SELECT d.reference_id, r.reference_name, r.start_codon, r.end_codon, COUNT(*) 'number_of_drms' FROM reference r INNER JOIN reference_drms "
                                            "d ON r.id = d.reference_id WHERE r.complete = 1 AND d.is_drm = 1 GROUP BY d.reference_id"))]
     (map #(assoc % :length (- (inc (:end_codon %)) (:start_codon %))) results)))
 
@@ -99,6 +100,30 @@
 (defn delete-reference!
   [rid]
   (do-local-execute! ["UPDATE reference SET complete = 0 WHERE id = ?" rid]))
+
+;; Alignment upload
+
+(defn do-alignment-inserts!
+  [alignment-id consensus results]
+  (do
+    (do-local-insert! :consensus (assoc consensus :alignment_id alignment-id))
+    (do-local-insert-multi! :alignment_results (map #(-> % (assoc :alignment_id alignment-id) (dissoc :header)) results))
+    (do-local-execute! ["UPDATE alignment SET complete = 1 WHERE id = ?" alignment-id])))
+
+;; Alignment view
+
+(defn get-alignments
+  []
+  (do-local-query [(str "SELECT a.id, a.alignment_name, a.results_filename, r.reference_name, COUNT(*) 'number_results' FROM alignment a INNER JOIN reference r "
+                        "ON a.reference_id = r.id INNER JOIN alignment_results ar ON a.id = ar.alignment_id GROUP BY a.id")]))
+
+(defn alignment-id-gets-consensus
+  [aid]
+  (first (do-local-query ["SELECT * FROM consensus WHERE alignment_id = ?" aid])))
+
+(defn alignment-id-gets-results
+  [aid]
+  (do-local-query ["SELECT * FROM alignment_results WHERE alignment_id = ?" aid]))
 
 ;; Query filters
 

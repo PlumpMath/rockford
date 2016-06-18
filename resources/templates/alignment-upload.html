@@ -45,26 +45,32 @@
                         <div class="form-group {% if errors.alignment-name %}has-error{% endif %}">
                                 <label class="control-label">Enter alignment name</label>
                                 <input maxlength="50" class="form-control" name="alignment-name" 
-                                {% if alignment-name %}value={{alignment-name}}{% endif %} placeholder="Enter an identifying name, e.g. 'CMVDR16-01'">
+                                {% if alignment-name %}value={{alignment-name}}{% endif %} placeholder="Enter an identifying name, e.g. 'CMV_2016_01'">
                                 {% if errors.alignment-name %}
                                 <label class="control-label">{{errors.alignment-name|join}}.</label>
                                 {% endif %}
                             </div>
                         
-                		<div class="form-group {% if errors.results-upload %}has-error{% endif %}">
+                		<div class="form-group {% if errors.results-upload %}has-error{% endif %}{% if errors.results-errors %}has-error{% endif %}">
                 			<label class="control-label">Upload aligned sequences</label>
                 			<input type="file" name="results-upload" accept=".fasta*">
                 			{% if errors.results-upload %}
                                 <label class="control-label">{{errors.results-upload.filename|join}}.</label>
-                                {% endif %}
+                            {% endif %}
+                            {% for error in errors.results-errors %}
+                            	<label class="control-label">{{error}}</label><br />
+                            {% endfor %}
                			</div>
                		
-                		<div class="form-group {% if errors.consensus-upload %}has-error{% endif %}">
+                		<div class="form-group {% if errors.consensus-upload %}has-error{% endif %}{% if errors.consensus-errors %}has-error{% endif %}">
                 			<label class="control-label">Upload consensus sequence</label>
                 			<input type="file" name="consensus-upload" accept=".fasta*">
                 			{% if errors.consensus-upload %}
                                 <label class="control-label">{{errors.consensus-upload.filename|join}}.</label>
                             {% endif %}
+                            {% for error in errors.consensus-errors %}
+                            	<label class="control-label">{{error}}</label><br />
+                            {% endfor %}
                			</div>
                		
                		

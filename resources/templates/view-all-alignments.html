@@ -5,14 +5,14 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h1 class="page-header">
-                            View all reference sequences
+                            View all alignments
                         </h1>
                         <ol class="breadcrumb">
                             <li>
                                 <i class="fa fa-dashboard"></i>  <a href="/">Dashboard</a>
                             </li>                         
                             <li class="active">
-                                <i class="fa fa-table"></i> Reference sequences
+                                <i class="fa fa-table"></i> Alignments
                             </li>
                         </ol>
                     </div>
@@ -23,24 +23,22 @@
             	<table class="table table-bordered table-hover">
                 	<thead>
                     	<tr>
-                        	<th>Name</th>
-                        	<th>Sequence length</th>
-                        	<th>Start codon</th>
-                        	<th>End codon</th>
-                        	<th># DRM sites</th>
+                        	<th>Alignment Name</th>
+                        	<th>Reference name</th>
+                        	<th>From file</th>
+                        	<th># Result sequences</th>
                     	</tr>
                 	</thead>
                 	<tbody>
                 
-                {% for ref in refs %}
+                {% for alignment in alignments %}
                 
                                 
     					<tr>
-                            <td><a href="/reference/view/{{ref.reference_id}}/">{{ref.reference_name}}</a></td>
-                            <td>{{ref.length}}</td>
-                            <td>{{ref.start_codon}}</td>
-                            <td>{{ref.end_codon}}</td>
-                            <td>{{ref.number_of_drms}}</td>
+                            <td><a href="/alignment/view/{{alignment.id}}/">{{alignment.alignment_name}}</a></td>
+                            <td>{{alignment.reference_name}}</td>
+                            <td>{{alignment.results_filename}}</td>
+                            <td>{{alignment.number_results}}</td>
                         </tr>
                 {% endfor %}
                                 </tbody>
