@@ -28,7 +28,7 @@
 (defroutes alignment-routes
   (context "/alignment" []
            (GET "/input/" [] align-up/upload-page)
-           (POST "/input/" [] align-up/upload-page)))
+           (POST "/input/" [] align-up/alignment-receiver)))
            
 (defroutes last-routes
   (route/not-found "Borfl"))

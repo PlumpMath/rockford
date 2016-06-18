@@ -8,13 +8,6 @@
 
 ;; Reference Fasta upload
 
-(defn file-to-fasta
-  "If a file was uploaded, returns any errors plus fasta data in maps, otherwise nil."
-  [{:keys [reference-upload]}]
-  (if (= (:size reference-upload) 0)
-    nil
-    (bji/reference-upload-parser (:tempfile reference-upload))))
-
 (defn save-reference!
   [params db-response]
   (if-let [error (:error db-response)]
@@ -25,8 +18,8 @@
 (defn receive-reference
   "Makes sure form fields are filled; if not, redisplays with errors, otherwise proceeds to fasta validation."
   [{:keys [params]}]
-  (let [int-params (merge params (bji/select-ints params [:start-codon :end-codon]))
-        errs-then-fasta (-> params file-to-fasta (v/check-max-fastas 1))
+  (let [int-params (merge params (v/select-ints params [:start-codon :end-codon]))
+        errs-then-fasta (v/check-max-fastas params :reference-upload :fasta-errors)
         params-n-fasta (merge (second errs-then-fasta) int-params)]
     (if-let [errors (merge-with #(reduce conj %1 %2)
                                 (v/reference-form int-params)

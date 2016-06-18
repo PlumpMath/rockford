@@ -23,35 +23,48 @@
                 
                 <div class="row">
                     <div class="col-lg-6">
-                    	<div class="form-group">
-                            <label>Select reference sequence</label>
-                            {% if errors.no-ref %}
+                    {% if no-ref %}
                             <div class="alert alert-danger">
-                    		<strong>ERROR: </strong>You need to select at least one drug resistance site.
+                    		<strong>ERROR: </strong>You need to upload at least one reference sequence first.
                 			</div>
-                			{% endif %}
+                	{% endif %}
+                    	<div class="form-group {% if errors.reference-id %}has-error{% endif %}">
+                            <label class="control-label">Select reference sequence</label>
                             <select class="form-control" name="reference-id">
-                            <option>Choose a reference sequence from the list</option>
+                            <option value>Choose a reference sequence from the list</option>
                             {% for ref in refs %}
                                 <option value="{{ref.reference_id}}" {% if reference-id %}{% ifequal reference-id|int ref.reference_id %}selected{% endifequal %}{% endif %}>{{ref.name}}</option>
                             {% endfor %}
                             </select>
+                            {% if errors.reference-id %}
+                            <label class="control-label">{{errors.reference-id|join}}.</label>
+                            {% endif %}
+                            </select>
                          </div>
                             
-                        <div class="form-group">
-                                <label>Enter alignment name</label>
+                        <div class="form-group {% if errors.alignment-name %}has-error{% endif %}">
+                                <label class="control-label">Enter alignment name</label>
                                 <input maxlength="50" class="form-control" name="alignment-name" 
                                 {% if alignment-name %}value={{alignment-name}}{% endif %} placeholder="Enter an identifying name, e.g. 'CMVDR16-01'">
+                                {% if errors.alignment-name %}
+                                <label class="control-label">{{errors.alignment-name|join}}.</label>
+                                {% endif %}
                             </div>
                         
-                		<div class="form-group">
-                			<label>Upload aligned sequences</label>
+                		<div class="form-group {% if errors.results-upload %}has-error{% endif %}">
+                			<label class="control-label">Upload aligned sequences</label>
                 			<input type="file" name="results-upload" accept=".fasta*">
+                			{% if errors.results-upload %}
+                                <label class="control-label">{{errors.results-upload.filename|join}}.</label>
+                                {% endif %}
                			</div>
                		
-                		<div class="form-group">
-                			<label>Upload consensus sequence</label>
+                		<div class="form-group {% if errors.consensus-upload %}has-error{% endif %}">
+                			<label class="control-label">Upload consensus sequence</label>
                 			<input type="file" name="consensus-upload" accept=".fasta*">
+                			{% if errors.consensus-upload %}
+                                <label class="control-label">{{errors.consensus-upload.filename|join}}.</label>
+                            {% endif %}
                			</div>
                		
                		

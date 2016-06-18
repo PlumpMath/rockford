@@ -11,18 +11,6 @@
 
 (set-loggers! "org.biojava.nbio.core.sequence.io.FastaReader" {:out (fn [ev] (println (:message ev)))})
 
-;; General helper functions and macros
-
-(defn parse-int [s]
-  (if (re-matches #"^\d+$" s)
-    (Integer/parseInt s)
-    s))
-
-(defn select-ints
-  [m keyvec]
-  (->> (select-keys m keyvec)
-    (reduce-kv #(assoc %1 %2 (parse-int %3)) {})))
-
 (defn fasta-to-clj
   [[k v]]
   {:header k :sequence (.getSequenceAsString v)})
@@ -32,13 +20,13 @@
   (reduce str (map #(if (= (str %) "-") \N %) s)))
 
 (defmacro wrap-fasta-errors
- [& exprs]
+ [errorname & exprs]
  `(let [s# (new java.io.StringWriter)]
     (binding [*out* s#]
       (let [fasta-output# ~@exprs
             errors# (str s#)]
         (if (not= "" errors#)
-          (cons {:fasta-errors (clojure.string/split errors# #"\n")} fasta-output#)
+          (cons {~errorname (clojure.string/split errors# #"\n")} fasta-output#)
           (cons {} fasta-output#))))))
 
 ;; Your basic BioEdit fasta parser interop
@@ -61,19 +49,6 @@
 
 ;; For dealing with uploaded alignments
 
-(defn parse-result-header
-  [x]
-  (let [part-dataset (->> (str/split (:header x) #"\.") (map parse-int))]
-    (merge x {:participant_id (first part-dataset) :dataset_id (rest part-dataset)})))
-
-(defn parse-results-fasta-from-upload
-  [file-loc]
-  (->> file-loc
-    file->parsed-fasta
-    (map (comp parse-result-header fasta-to-clj))))
-
-;; 
-
 (defn parse-fasta-in-dataset
   [dataset-map]
   (let [parsed-fs (-> (:unparsed_fasta dataset-map)
@@ -85,8 +60,8 @@
         :sequence (-> parsed-fs vals first (.getSequenceAsString) replace-dashes)})
       (assoc in-process :nucleotide_count (count (:sequence in-process))))))
 
-(defn reference-upload-parser
-  [file-loc]
-  (wrap-fasta-errors
+(defn fasta-upload-parser
+  [file-loc errorname]
+  (wrap-fasta-errors errorname
     (map fasta-to-clj (file->parsed-fasta file-loc))))
 
