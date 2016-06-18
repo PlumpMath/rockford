@@ -1,1 +1,2 @@
 resources/public/* linguist-vendored
+bin/public/* linguist-vendored
