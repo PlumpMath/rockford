@@ -7,7 +7,7 @@
 #
 # Host: 127.0.0.1 (MySQL 5.7.10)
 # Database: rockford
-# Generation Time: 2016-06-18 22:37:08 +0000
+# Generation Time: 2016-06-20 15:46:29 +0000
 # ************************************************************
 
 
@@ -47,6 +47,24 @@ CREATE TABLE `alignment_results` (
   `participant_id` int(11) unsigned DEFAULT NULL,
   `dataset_id` int(11) unsigned DEFAULT NULL,
   `sequence` text,
+  `dot_sequence` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Dump of table alignment_results_codons
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `alignment_results_codons`;
+
+CREATE TABLE `alignment_results_codons` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `alignment_id` int(11) unsigned NOT NULL,
+  `dataset_id` int(11) unsigned NOT NULL,
+  `codon_id` int(11) unsigned NOT NULL,
+  `sequence` varchar(30) NOT NULL,
+  `dot_sequence` varchar(30) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -64,6 +82,20 @@ CREATE TABLE `consensus` (
   `filename` text,
   `sequence` text,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+# Dump of table consensus_codons
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `consensus_codons`;
+
+CREATE TABLE `consensus_codons` (
+  `consensus_id` int(11) unsigned NOT NULL,
+  `codon_id` int(11) NOT NULL,
+  `sequence` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`consensus_id`,`codon_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

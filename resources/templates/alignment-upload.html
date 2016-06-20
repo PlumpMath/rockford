@@ -33,7 +33,7 @@
                             <select class="form-control" name="reference-id">
                             <option value>Choose a reference sequence from the list</option>
                             {% for ref in refs %}
-                                <option value="{{ref.reference_id}}" {% if reference-id %}{% ifequal reference-id|int ref.reference_id %}selected{% endifequal %}{% endif %}>{{ref.name}}</option>
+                                <option value="{{ref.reference_id}}" {% if reference-id %}{% ifequal reference-id|int ref.reference_id %}selected{% endifequal %}{% endif %}>{{ref.reference_name}}</option>
                             {% endfor %}
                             </select>
                             {% if errors.reference-id %}

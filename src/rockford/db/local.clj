@@ -55,21 +55,21 @@
     (utils/rename-ids :reference_id)
     first))
 
-(defn insert-reference-drms!
-  [sequence-id sequence start-codon end-codon]
-  (let [drm-maps (map #(hash-map :reference_id % :codon_id %2 :sequence %3)
-                      (repeat (- (inc end-codon) start-codon) sequence-id)
+(defn insert-codons!
+  [table id-name id sequence start-codon end-codon]
+  (let [drm-maps (map #(hash-map id-name % :codon_id %2 :sequence %3)
+                      (repeat id)
                       (range start-codon (inc end-codon))
                       (map #(apply str %) (partition 3 sequence)))]
-    (do-local-insert-multi! :reference_drms drm-maps)))
+    (do-local-insert-multi! table drm-maps)))
   
 (defn do-reference-inserts!
   [{:keys [header sequence start-codon end-codon]}]
   (try
-    (let [key (-> (do-local-insert! :reference {:name header :sequence sequence :start_codon start-codon :end_codon end-codon})
+    (let [key (-> (do-local-insert! :reference {:reference_name header :sequence sequence :start_codon start-codon :end_codon end-codon})
                 first :generated_key)]
       (do
-        (insert-reference-drms! key sequence start-codon end-codon)
+        (insert-codons! :reference_drms :reference_id key sequence start-codon end-codon)
         {:reference-key key}))
     (catch Exception e {:error (str (.getMessage e))})))
 
@@ -101,15 +101,6 @@
   [rid]
   (do-local-execute! ["UPDATE reference SET complete = 0 WHERE id = ?" rid]))
 
-;; Alignment upload
-
-(defn do-alignment-inserts!
-  [alignment-id consensus results]
-  (do
-    (do-local-insert! :consensus (assoc consensus :alignment_id alignment-id))
-    (do-local-insert-multi! :alignment_results (map #(-> % (assoc :alignment_id alignment-id) (dissoc :header)) results))
-    (do-local-execute! ["UPDATE alignment SET complete = 1 WHERE id = ?" alignment-id])))
-
 ;; Alignment view
 
 (defn get-alignments
@@ -124,6 +115,32 @@
 (defn alignment-id-gets-results
   [aid]
   (do-local-query ["SELECT * FROM alignment_results WHERE alignment_id = ?" aid]))
+
+;; Alignment upload
+
+(defn result-to-long
+  [start end alignment-id]
+  (fn [x]
+    (map #(hash-map :alignment_id % :codon_id %2 :dataset_id %3 :sequence %4 :dot_sequence %5)
+         (repeat alignment-id)
+         (range start (inc end))
+         (repeat (:dataset_id x))
+         (map #(apply str %) (partition 3 (:sequence x)))
+         (map #(apply str %) (partition 3 (:dot_sequence x))))))
+
+(defn alignment-id-gets-reference
+  [alignment-id]
+  (do-local-query ["SELECT r.* FROM alignment a INNER JOIN reference r ON a.reference_id = r.id WHERE a.id = ?" alignment-id]))
+
+(defn do-alignment-inserts!
+  [alignment-id consensus results]
+  (let [reference (first (alignment-id-gets-reference alignment-id))
+        consensus-id (:generated_key (first (do-local-insert! :consensus (assoc consensus :alignment_id alignment-id))))]
+  (do
+    (insert-codons! :consensus_codons :consensus_id consensus-id (:sequence consensus) (:start_codon reference) (:end_codon reference))
+    (do-local-insert-multi! :alignment_results (map #(-> % (assoc :alignment_id alignment-id) (dissoc :header)) results))
+    (do-local-insert-multi! :alignment_results_codons (mapcat (result-to-long (:start_codon reference) (:end_codon reference) alignment-id) results))
+    (do-local-execute! ["UPDATE alignment SET complete = 1 WHERE id = ?" alignment-id]))))
 
 ;; Query filters
 

@@ -1,5 +1,5 @@
-(ns rockford.nucleotides
-  (:require [clojure.set :as set]))
+(ns rockford.drms.nucleotides
+    (:require [clojure.set :as set]))
 
 (def nuc-map 
   {\A \A,
@@ -51,12 +51,17 @@
       #{x}
       (set (mapcat nuc-drilldown nuc-value)))))
 
-(defn drm-assess
+(defn base-compare
   [wt c r]
   (cond
+    (nil? (get nuc-sets r)) r
     (= wt c) (if (= r wt) \. r)
-    (not= wt c) (if (and (clojure.set/subset? (get nuc-sets r) (conj (get nuc-sets c) wt))
+    (not= wt c) (if (and (set/subset? (get nuc-sets r) (conj (get nuc-sets c) wt))
                          (not= r wt)) \. r)))
+
+(defn drm-assess
+  [wt-seq cons-seq fastamap]
+  (map #(assoc % :dot_sequence (reduce str (map base-compare wt-seq cons-seq (:sequence %)))) fastamap))
 
 (defn split-by-seq
   "Partitions splittee (must be a vector) using the length of sequences in splitter as a template."

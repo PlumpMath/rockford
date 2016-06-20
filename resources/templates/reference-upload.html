@@ -12,10 +12,10 @@
                 
                 {{anti-forgery|safe}}
            
-                <div class="form-group {% if errors.results-upload %}has-error{% endif %}{% if errors.fasta-errors %}has-error{% endif %}">
-                	<label class="control-label">Upload aligned sequences</label>
+                <div class="form-group {% if errors.reference-upload %}has-error{% endif %}{% if errors.fasta-errors %}has-error{% endif %}">
+                	<label class="control-label">Upload reference sequence</label>
                 	<input type="file" name="reference-upload" accept=".fasta*">
-                	{% if errors.results-upload %}
+                	{% if errors.reference-upload %}
                 	<label class="control-label">A fasta file must be selected.</label>
                 	{% endif %}
                 	{% for e in errors.fasta-errors %}

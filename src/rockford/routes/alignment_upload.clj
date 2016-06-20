@@ -3,15 +3,15 @@
             [selmer.filters :as filters]
             [rockford.routes.validators :as v]
             [rockford.db.local :as local]
+            [rockford.drms.nucleotides :as nucs]
             [ring.util.http-response :as response]
             [ring.util.anti-forgery :refer [anti-forgery-field]]))
 
 (filters/add-filter! :int v/parse-int)
 
 (defn get-ref-length
-  [params]
-  (as-> (local/id-gets-reference {:reference-id "17"}) ref 
-    (- (inc (:end_codon ref)) (:start_codon ref))))
+  [reference]
+    (- (inc (:end_codon reference)) (:start_codon reference)))
 
 (defn upload-page
   [{:keys [flash]}]
@@ -26,20 +26,22 @@
     (if-let [errors (v/alignment-form params)]
       (-> (response/found "/alignment/input/")
         (assoc :flash (assoc params :errors errors)))
-      (let [ref-length (get-ref-length params)
-           errs-then-consensus (v/get-errs-consensus params :consensus-upload :consensus-errors ref-length)
-           errs-then-results (v/get-errs-results params :results-upload :results-errors ref-length)]
-        (if-let [fasta-errors (merge (not-empty (first errs-then-consensus)) (not-empty (first errs-then-results)))]
-          (-> (response/found "/alignment/input/")
-            (assoc :flash (assoc params :errors fasta-errors)))
-          (let [alignment-id (-> (local/do-local-insert! :alignment 
-                                                         {:reference_id (:reference-id params) 
-                                                          :alignment_name (:alignment-name params) 
-                                                          :results_filename (get-in params [:results-upload :filename])})
-                               first :generated_key)]
-                 (do
-                   (local/do-alignment-inserts! alignment-id (assoc (second errs-then-consensus) :filename (get-in params [:consensus-upload :filename])) (rest errs-then-results))
-                   (response/found (str "/alignment/view/" alignment-id "/"))))))))
+      (let [ref-length (get-ref-length (local/id-gets-reference params))
+          errs-then-consensus (v/get-errs-consensus params :consensus-upload :consensus-errors ref-length)
+          errs-then-results (v/get-errs-results params :results-upload :results-errors ref-length)]
+       (if-let [fasta-errors (merge (not-empty (first errs-then-consensus)) (not-empty (first errs-then-results)))]
+        (-> (response/found "/alignment/input/")
+         (assoc :flash (assoc params :errors fasta-errors)))
+        (let [ref-seq (:sequence (local/id-gets-reference params))
+              cons-seq (-> errs-then-consensus second :sequence)
+              alignment-id (-> (local/do-local-insert! :alignment 
+                                                       {:reference_id (:reference-id params) 
+                                                        :alignment_name (:alignment-name params) 
+                                                        :results_filename (get-in params [:results-upload :filename])})
+                             first :generated_key)]
+               (do
+                 (local/do-alignment-inserts! alignment-id (assoc (second errs-then-consensus) :filename (get-in params [:consensus-upload :filename])) (nucs/drm-assess ref-seq cons-seq (rest errs-then-results)))
+                 (response/found (str "/alignment/view/" alignment-id "/"))))))))
 
 (defn view-all
   []
